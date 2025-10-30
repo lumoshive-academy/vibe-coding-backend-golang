@@ -9,26 +9,25 @@
     - Logging: uber-go/zap
     - Authentication: JWT (HS256)
     - Linting: golangci-lint
-    - Testing: built-in testing, httptest, and stretchr/testify
+    - Testing: built-in testing, httptest, stretchr/testify and DATA-DOG/go-sqlmock
 - Goal: 
 
 A small, modular RESTful API built with idiomatic Go, clean architecture principles, structured logging, and best security practices.
 
 ## Recommended Folder Structure
 ```
-├── cmd/
-│   └── app/                 # main application entry point
-├── configs/                 # environment and configuration files (.env, config.yaml)
-├── database/                # database connection and auto-migration initialization
-├── handler/                 # HTTP route handlers (controllers)
-├── middleware/              # custom middlewares (auth, logger, recovery, etc.)
-├── model/                   # data models (GORM structs + DTOs)
-├── repository/              # data access layer (PostgreSQL queries via GORM)
-├── router/                  # route initialization using go-chi/chi
-├── service/                 # business logic (use cases, domain rules)
-├── package/                 # reusable packages (utilities, helpers)
-├── test/                    # test helpers and fixtures
-├── Makefile                 # build/test automation
+├── main.go                 # main entry point (application startup)
+├── .env.example            # environment variable example file
+├── database/               # database connection and auto-migration initialization
+├── handler/                # HTTP route handlers (controllers)
+├── middleware/             # custom middlewares (auth, logger, recovery, etc.)
+├── model/                  # data models (GORM structs + DTOs)
+├── repository/             # data access layer (PostgreSQL queries via GORM)
+├── router/                 # route initialization using go-chi/chi
+├── service/                # business logic (use cases, domain rules)
+├── package/                # reusable packages (utilities, helpers)
+├── test/                   # test helpers and fixtures
+├── Makefile                # build/test automation
 ├── go.mod / go.sum
 └── README.md / AGENTS.md
 ```
@@ -88,8 +87,24 @@ cover:
     - Unit Tests:
         - Implemented in:
             - `service/` → test core business logic (use cases).
-            - `repository/` → test data operations with mocked DB or in-memory DB.
+            - `repository/` → test data operations using github.com/DATA-DOG/go-sqlmock
             - `handler/` → test HTTP request/response using httptest.
+            
+            **Example: repository test with go-sqlmock**
+            ```go
+            db, mock, _ := sqlmock.New()
+            defer db.Close()
+
+            gormDB, _ := gorm.Open(postgres.New(postgres.Config{Conn: db}), &gorm.Config{})
+            repo := NewUserRepository(gormDB)
+
+            mock.ExpectQuery(`SELECT \* FROM "users"`).
+                WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Budi"))
+
+            users, err := repo.FindAll(context.Background())
+            require.NoError(t, err)
+            require.Len(t, users, 1)
+            ```
     - Integration Tests:    
         - Run actual DB and API interactions, verifying full flow.
     - E2E/API Tests:
@@ -232,7 +247,7 @@ chmod +x .git/hooks/pre-commit
     ``` bash
     make run
     ```
-5. ccess API:
+5. Access API:
     ``` bash
     http://localhost:8080/health
     ```

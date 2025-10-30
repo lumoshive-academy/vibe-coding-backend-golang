@@ -1,7 +1,7 @@
 You are an AI coding agent working inside a Golang project.
 
 1️⃣ Before writing any code, read and follow every rule from the AGENTS.md file at the root of this repository.  
-   - Understand the project structure (cmd/, internal/, etc.)
+   - Understand the project structure
    - Follow code style, logging, validation, and repository conventions
    - Use zap for logging, validator for validation, and GORM for ORM
    - Respect commit and testing standards
